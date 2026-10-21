@@ -66,7 +66,7 @@ const RELEASE_HELD = 34;
 const LONG = 0;
 const INCREASE = 0;
 const DECREASE = 1;
-const HEDGE_VENUE_LIGHTER = 1;
+const HEDGE_VENUE = 1;
 const SEAT_CROSS = 0;
 
 const SOL = "SOL";
@@ -282,7 +282,7 @@ function requestBody(r: Request, maintenanceBps: number, profileBump: number): B
   body.writeUInt16LE(50, 48); // slippage_bps
   body.writeUInt8(LONG, 50); // side
   body.writeUInt8(r.action, 51); // action
-  body.writeUInt8(HEDGE_VENUE_LIGHTER, 52); // requested_hedge_venue
+  body.writeUInt8(HEDGE_VENUE, 52); // requested_hedge_venue
   body.writeUInt8(0, 53); // flags
   body.writeUInt8(requestPda(r.user, r.requestId)[1], 54); // request_bump
   body.writeUInt8(SEAT_CROSS, 55); // margin_seat
@@ -330,7 +330,7 @@ function sunriseDepositIx(r: Request): TransactionInstruction {
       // an INCREASE also carries the seat's margin account and the market's
       // funding index (which may not exist yet: an absent one accrues nothing)
       meta(marginPda(profile)[0], false),
-      meta(fundingIndexPda(HEDGE_VENUE_LIGHTER, asset), false),
+      meta(fundingIndexPda(HEDGE_VENUE, asset), false),
     ],
     data: Buffer.concat([Buffer.from([SUNRISE_DEPOSIT]), head, request]),
   });
@@ -381,7 +381,7 @@ function acceptIx(user: PublicKey, profileIndex: number, requestId: bigint, fill
   data.writeBigUInt64LE(fill.price, 32); // fill_price (1e-9)
   data.writeBigUInt64LE(fill.sizeUsd, 40); // filled_size_usd (µUSD)
   data.writeBigUInt64LE(fill.base, 48); // filled_base (1e-9 base)
-  data.writeUInt8(HEDGE_VENUE_LIGHTER, 56); // hedge_venue
+  data.writeUInt8(HEDGE_VENUE, 56); // hedge_venue
   data.writeUInt8(positionBump, 57); // position_bump
   data.writeUInt8(marginBump, 58); // margin_bump
   data.writeUInt16LE(bundle.market_maintenance_bps, 59); // market_maintenance: u16 bps…
@@ -399,7 +399,7 @@ function acceptIx(user: PublicKey, profileIndex: number, requestId: bigint, fill
       meta(operator.publicKey, false), // maker: the bundle's config names the operator
       meta(operator.publicKey, true), // rent_payer: whoever paid for the request
       meta(SystemProgram.programId, false),
-      meta(fundingIndexPda(HEDGE_VENUE_LIGHTER, asset), true),
+      meta(fundingIndexPda(HEDGE_VENUE, asset), true),
       meta(guardConfig, false),
       meta(feedTable, false),
       meta(SYSVAR_INSTRUCTIONS_PUBKEY, false),
