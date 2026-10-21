@@ -33,7 +33,7 @@ The programs check their own address, so they only work at these addresses.
 
 | file | sha256 |
 |---|---|
-| `programs/imperial_passthrough.so` | `840841e489caf51a4ad20ffabbfa67490886abd57772283bff5b0003c43b2807` |
+| `programs/imperial_passthrough.so` | `462b3dca88d9003b9c52014d55c4968e8b9f4f7abd8a5502498b0571f2c8a39f` |
 | `programs/imperial_sunrise.so` | `b329c26de6411f5857eab3c23abb132321131e4ad3f286d1f300360f65faa9b7` |
 
 To check a binary against what is live now:
