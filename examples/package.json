@@ -1,0 +1,17 @@
+{
+  "name": "imperial-localnet-examples",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "profit-withdrawal": "tsx profit-withdrawal.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@solana/web3.js": "1.98.4"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.4",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3"
+  }
+}

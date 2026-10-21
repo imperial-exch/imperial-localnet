@@ -1,17 +1,19 @@
 """Swap this machine's own keys into the bundle's account snapshots.
 
-The snapshots in accounts/ name placeholder admin and operator keys whose
-private keys were discarded when the bundle was built. This writes copies with
-your keys (keys/admin.json, keys/operator.json) in their place to
-.local/accounts/, which start.sh loads.
+The snapshots in accounts/ name placeholder admin, operator and oracle keys
+whose private keys were discarded when the bundle was built. This writes
+copies with your keys (keys/admin.json, keys/operator.json, keys/oracle.json)
+in their place to .local/accounts/, which start.sh loads.
 """
 
 import base64
 import json
 import pathlib
+import shutil
 
 ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 ROOT = pathlib.Path(__file__).resolve().parent
+ROLES = ("admin", "operator", "oracle")
 
 
 def b58_pubkey(text):
@@ -28,17 +30,18 @@ def keypair_pubkey(path):
 placeholders = json.loads((ROOT / "placeholders.json").read_text())
 swaps = [
     (b58_pubkey(placeholders[role]), keypair_pubkey(ROOT / "keys" / f"{role}.json"))
-    for role in ("admin", "operator")
+    for role in ROLES
 ]
 
-out = ROOT / ".local" / "accounts"
-out.mkdir(parents=True, exist_ok=True)
-for stale in out.glob("*.json"):
-    stale.unlink()
-for src in sorted((ROOT / "accounts").glob("*.json")):
+src_root = ROOT / "accounts"
+out_root = ROOT / ".local" / "accounts"
+shutil.rmtree(out_root, ignore_errors=True)
+for src in sorted(src_root.rglob("*.json")):
     doc = json.loads(src.read_text())
     data = base64.b64decode(doc["account"]["data"][0])
     for placeholder, mine in swaps:
         data = data.replace(placeholder, mine)
     doc["account"]["data"][0] = base64.b64encode(data).decode()
-    (out / src.name).write_text(json.dumps(doc, indent=2))
+    out = out_root / src.relative_to(src_root)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(doc, indent=2))
