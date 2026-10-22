@@ -5,6 +5,9 @@ their mainnet addresses, with every admin account already initialized.
 Fees, risk parameters and the price guard are copied from mainnet; only the
 keys differ.
 
+Trading Armada from your own program by CPI (markets and seats, TP/SL,
+cancellation finality, websockets) is covered in [`docs/integration.md`](docs/integration.md).
+
 This repository contains no private keys. The first run of `start.sh`
 generates your own admin, operator and oracle keys into `keys/` (gitignored)
 and writes them into the account snapshots, so you control every role.
@@ -65,14 +68,17 @@ no changes. Mint as much as you like:
 ## What is initialized
 
 * passthrough `GlobalSettings` (`5cRBwzfnwuBGm4EviXmC6WJGtTRbs2jJHUCLH5bpXZ6r`) and the fee recipient's USDC account
-* Sunrise config, and the vault seeded with **10000000 USDC** of house liquidity.
-  Add more with Sunrise `FUND_VAULT`, signed by the admin.
+* Sunrise config, with mainnet's liquidation settings, and the vault seeded with
+  **10000000 USDC** of house liquidity. Add more with Sunrise `FUND_VAULT`, signed by the admin.
+* the Sunrise portfolio risk account (`GSJV9PkdgvVTCJxGwrM9oF5rwR9X7fQY3TKmjR8jR13P`) with mainnet's settings
 * the Sunrise price guard (`DjJbwMgGLeab2mvS2RUXXQq82MiqDVMVaKk3mK6RUVBX`) with mainnet's settings, and the
   feed table (`GbSDZjJSsKkjrBnRQNMAeMrSP2wvEhH31L53aobXLt3p`) with mainnet's 173 market → Lazer feed mappings.
   `start.sh --no-guard` leaves both out.
 
-Not set up: per-market isolated leverage tiers, portfolio margin, and funding
-rates (a market with no funding index accrues nothing).
+Not set up: per-market funding indexes, which carry the isolated leverage tiers,
+the portfolio correlation groups and the funding rates (a market with no funding
+index has no tier, nets with nothing and accrues nothing). `examples/liquidation.ts`
+creates BTC's funding index and gives it mainnet's tier.
 
 ## How an order executes
 
@@ -87,7 +93,8 @@ On mainnet Imperial's operator executes every fill; locally, you are the operato
    price is what sets the position's entry.
 
 Closes are a Sunrise `REQUEST` with action DECREASE, then `ACCEPT`.
-Liquidations are Sunrise `BEGIN_LIQUIDATION` + `FINALIZE_LIQUIDATION`, signed
+Liquidations are Sunrise `BEGIN_LIQUIDATION` + `FINALIZE_LIQUIDATION` (a
+position opened under a market tier: `SETTLE_NATIVE_LIQUIDATION`), signed
 by the operator with the mark price you choose. A close settles realized PnL
 into the profile's Sunrise margin account; Sunrise `WITHDRAW_COLLATERAL` moves
 it back to the profile's USDC account. `examples/profit-withdrawal.ts` does
@@ -211,5 +218,11 @@ Stamp frames with wall time, as Lazer does, and send them at once.
 `examples/profit-withdrawal.ts` (TypeScript, `@solana/web3.js` 1.x, no
 Imperial packages) creates a user, opens a $1,000 SOL long at $150 and closes
 it at $165 with signed frames, withdraws the profit, and then shows a stale
-frame, an unlisted signer and a bad signature. Every byte layout in it names
-the program struct it mirrors. See `examples/README.md` for its output.
+frame, an unlisted signer and a bad signature. Every byte layout the examples
+use (`examples/common.ts`) names the program struct it mirrors.
+
+`examples/liquidation.ts` liquidates a 250x isolated BTC seat and a cross seat
+holding SOL and BTC, each one cent inside its maintenance line after a refusal
+one cent outside it, and prints the exact liquidation instructions and the log
+lines and account changes that mark one. See `examples/README.md` for the
+output of both.

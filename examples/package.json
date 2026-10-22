@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "liquidation": "tsx liquidation.ts",
     "profit-withdrawal": "tsx profit-withdrawal.ts",
     "typecheck": "tsc --noEmit"
   },
